@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
+
+import tqdm
 
 from zeniba.client import Client
 from zeniba.parser import Parser
@@ -7,7 +9,7 @@ from zeniba.parser import Parser
 
 @dataclass
 class Book:
-    """Book meta"""
+    """Book metadata"""
 
     # ids
     zid: str
@@ -38,18 +40,32 @@ class Book:
         self.did = self.did.replace("/dl/", "")
 
 
-def download(client: Client, did: str):
+def download(client: Client, did: str, out: Optional[str] = None) -> str:
     """Book downloader"""
 
-    res = client.get(f"/dl/{did}")
+    response = client.get(f"/dl/{did}", stream=True)
 
     # TODO check if the pattern of the header is always the same
-    content_disposition = res.headers["Content-Disposition"]
+    content_disposition = response.headers["Content-Disposition"]
     filename = content_disposition.split(";filename*=")[0].replace(
         "attachment; filename=", ""
     )[1:-1]
+    total_length = float(response.headers.get('content-length', 0))
+    out = out or filename
 
-    return filename, res.content
+    print(f"Downloading {filename} to {out}")
+    with open(out, "wb") as file, tqdm.tqdm(
+        total=total_length,
+        unit='iB',
+        unit_scale=True,
+        unit_divisor=1024
+    ) as pbar:
+        for data in response.iter_content(chunk_size=4096):
+            size = file.write(data)
+            pbar.update(size)
+    print(f"Downloaded {filename} to {out}")
+
+    return f"{out}/{filename}"
 
 
 def book(client: Client, zid: str):

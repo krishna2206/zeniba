@@ -5,9 +5,10 @@ Zeniba: a z-library scraper
 
 from typing import List, Optional, Union
 
-from zeniba.book import Book, book, download
-from zeniba.client import Client, login
 from zeniba.search import Link, search
+from zeniba.client import Client, login
+from zeniba.book import Book, book, download
+from zeniba.user import download_stats, downloaded_books
 
 
 class Zeniba:
@@ -23,15 +24,15 @@ class Zeniba:
     def __init__(self, uid: str, key: str):
         self.client = Client(key, uid)
 
-    def book(self, link: Union[Link, str]):
+    def get_book(self, link: Union[Link, str]):
         zid = link.zid if isinstance(link, Link) else link
         return book(self.client, zid)
 
-    def download(self, book: Union[Book, str]):
+    def download_book(self, book: Union[Book, str], out: Optional[str] = None):
         did = book.did if isinstance(book, Book) else book
-        return download(self.client, did)
+        return download(self.client, did, out)
 
-    def search(
+    def search_book(
         self,
         query: str,
         exact: bool = False,
@@ -51,3 +52,9 @@ class Zeniba:
             extensions,
             order,
         )
+
+    def get_download_stats(self):
+        return download_stats(self.client)
+
+    def get_downloaded_books(self):
+        return downloaded_books(self.client)

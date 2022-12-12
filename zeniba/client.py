@@ -40,7 +40,7 @@ class Client:
         self.session.cookies["remix_userid"] = uid
         self.session.proxies = config.PROXIES
 
-    def get(self, path: str, params: Optional[Dict] = None):
+    def get(self, path: str, params: Optional[Dict] = None, **kwargs):
         """Get a page"""
 
         path = path if path.startswith("/") else f"/{path}"
@@ -49,4 +49,5 @@ class Client:
             params=params or {},
             allow_redirects=True,
             headers=config.HEADERS,
+            **kwargs
         )
